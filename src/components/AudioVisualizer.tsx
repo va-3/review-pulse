@@ -7,6 +7,7 @@ import * as THREE from "three";
 
 interface AudioVisualizerProps {
   speaking: boolean;
+  compact?: boolean;
 }
 
 function OrbitRing({ radius, speed, axis, speaking }: { radius: number; speed: number; axis: [number, number, number]; speaking: boolean }) {
@@ -40,7 +41,7 @@ function OrbitRing({ radius, speed, axis, speaking }: { radius: number; speed: n
   );
 }
 
-function AnimatedCore({ speaking }: { speaking: boolean }) {
+function AnimatedCore({ speaking, compact }: { speaking: boolean; compact?: boolean }) {
   const meshRef = useRef<THREE.Mesh>(null);
   const { pointer } = useThree();
 
@@ -56,19 +57,19 @@ function AnimatedCore({ speaking }: { speaking: boolean }) {
     meshRef.current.rotation.x = THREE.MathUtils.lerp(meshRef.current.rotation.x, targetRx + t * 0.15, 0.06);
     meshRef.current.rotation.y = THREE.MathUtils.lerp(meshRef.current.rotation.y, targetRy + t * 0.18, 0.06);
 
-    const targetScale = speaking ? 1.18 : 1.0;
-    const newScale = THREE.MathUtils.lerp(meshRef.current.scale.x, targetScale, 0.06);
+    const targetScale = speaking ? 1.08 : 1.0;
+    const newScale = THREE.MathUtils.lerp(meshRef.current.scale.x, targetScale, 0.05);
     meshRef.current.scale.set(newScale, newScale, newScale);
   });
 
   return (
     <group>
-      <Sphere ref={meshRef} args={[1.55, 96, 96]}>
+      <Sphere ref={meshRef} args={[compact ? 0.85 : 1.55, 96, 96]}>
         <MeshDistortMaterial
           color={speaking ? "#ef4444" : "#444444"}
           attach="material"
-          distort={speaking ? 0.45 : 0.3}
-          speed={speaking ? 3.0 : 1.4}
+          distort={speaking ? 0.32 : 0.25}
+          speed={speaking ? 2.4 : 1.2}
           roughness={0.2}
           metalness={0.86}
           emissive={speaking ? "#ef4444" : "#000000"}
@@ -79,11 +80,11 @@ function AnimatedCore({ speaking }: { speaking: boolean }) {
   );
 }
 
-export function AudioVisualizer({ speaking }: AudioVisualizerProps) {
+export function AudioVisualizer({ speaking, compact }: AudioVisualizerProps & { compact?: boolean }) {
   return (
     <div className="w-full h-full absolute inset-0">
       <Canvas
-        camera={{ position: [0, 0, 4.2], fov: 55 }}
+        camera={{ position: [0, 0, compact ? 6.0 : 4.2], fov: 55 }}
         dpr={[1, 1.8]}
         gl={{ antialias: true, alpha: true, powerPreference: "high-performance" }}
       >
@@ -91,10 +92,10 @@ export function AudioVisualizer({ speaking }: AudioVisualizerProps) {
         <directionalLight position={[10, 10, 5]} intensity={1.2} />
         <pointLight position={[-10, -10, -10]} intensity={0.55} color={speaking ? "#ef4444" : "#3b82f6"} />
 
-        <AnimatedCore speaking={speaking} />
+        <AnimatedCore speaking={speaking} compact={compact} />
 
         {/* Single "planet" ring (same size as inner ring) */}
-        <OrbitRing radius={2.2} speed={speaking ? 0.6 : 0.3} axis={[1, 0.5, 0]} speaking={speaking} />
+        <OrbitRing radius={compact ? 1.5 : 2.2} speed={speaking ? 0.6 : 0.3} axis={[1, 0.5, 0]} speaking={speaking} />
       </Canvas>
     </div>
   );

@@ -78,6 +78,7 @@ export function CommandCenter() {
   const [lastDebugStats, setLastDebugStats] = useState<any>(null);
   const [isDebugOpen, setIsDebugOpen] = useState(false);
   const [isResultOpen, setIsResultOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   // Load persisted state
   useEffect(() => {
@@ -99,6 +100,16 @@ export function CommandCenter() {
     const payload = JSON.stringify({ docs, messages });
     window.localStorage.setItem("reviewpulse_state_v1", payload);
   }, [docs, messages]);
+
+  // Mobile detection
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mql = window.matchMedia("(max-width: 768px)");
+    const update = () => setIsMobile(mql.matches);
+    update();
+    mql.addEventListener?.("change", update);
+    return () => mql.removeEventListener?.("change", update);
+  }, []);
 
   // Auto-scroll transcript
   useEffect(() => {
@@ -216,6 +227,7 @@ export function CommandCenter() {
     setIsCallActive(true);
     setMessages((prev) => [...prev, { role: "user", content: q }]);
     setQuery("");
+    setIsResultOpen(true);
 
     try {
       const res = await fetch("/api/query", {
@@ -515,7 +527,10 @@ export function CommandCenter() {
             </div>
 
             {/* Center: Visualizer (Hero) */}
-            <div className="relative min-h-0 rounded-3xl bg-black/40 border border-white/5 overflow-hidden flex items-center justify-center">
+            <div className={cn(
+              "relative min-h-0 rounded-3xl bg-black/40 border border-white/5 overflow-hidden flex items-center justify-center",
+              isResultOpen && "opacity-0 pointer-events-none"
+            )}>
               {/* Center brand lockup (simple) */}
               {!loading && !(mode === "call" && isCallActive) && (
                 <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
@@ -535,7 +550,7 @@ export function CommandCenter() {
             </div>
 
             {/* Query Input */}
-            <div className="shrink-0 rounded-3xl border border-white/5 bg-white/[0.02] backdrop-blur-sm px-4 py-3 flex items-center gap-3 focus-within:border-white/20 transition-colors">
+            <div className="shrink-0 rounded-3xl border border-white/15 bg-white/[0.06] backdrop-blur-lg px-4 py-3 flex items-center gap-3 focus-within:border-white/20 transition-colors">
               <Search className="w-4 h-4 text-white/40 ml-2" />
               <input
                 value={query}
@@ -610,37 +625,29 @@ export function CommandCenter() {
       </main>
 
       {/* Fullscreen Results Modal */}
-      {isResultOpen && lastAssistant && (
-        <div className="fixed inset-0 z-[60] bg-black/70 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="relative w-full max-w-6xl h-[84vh] rounded-3xl border border-white/10 bg-black/60 overflow-hidden grid grid-cols-1 lg:grid-cols-2">
+      {isResultOpen && (
+        <div className="fixed inset-0 z-[60] bg-black/75 backdrop-blur-md flex items-stretch justify-stretch">
+          <div className="relative w-full h-full border border-white/10 bg-black/60 overflow-hidden grid grid-cols-[1.1fr_0.9fr]">
+            <div className="pointer-events-none absolute inset-y-0 left-1/2 w-px bg-white/10 opacity-30" />
             {/* Left: Text */}
-            <div className="p-6 lg:p-8 flex flex-col gap-4 border-b lg:border-b-0 lg:border-r border-white/10">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-white/80">
-                  <Sparkles className="w-4 h-4 text-violet-300/80" />
-                  <span className="text-sm font-medium">Result</span>
-                </div>
-                <button
-                  onClick={() => setIsResultOpen(false)}
-                  className="p-2 rounded-full hover:bg-white/10 text-white/60 hover:text-white"
-                  aria-label="Close results"
-                >
-                  <X className="w-4 h-4" />
-                </button>
+            <div className="p-6 lg:p-10 flex flex-col gap-4 border-r border-white/10">
+              <div className="flex items-center gap-2 text-white/80">
+                <Sparkles className="w-4 h-4 text-violet-300/80" />
+                <span className="text-sm font-medium">Result</span>
               </div>
 
-              <div className="flex-1 rounded-2xl border border-white/10 bg-white/[0.02] p-5 overflow-y-auto">
+              <div className="flex-1 rounded-2xl border border-white/15 bg-white/[0.06] backdrop-blur-lg p-5 overflow-y-auto">
                 <div className="text-sm leading-relaxed whitespace-pre-wrap text-white/85">
-                  {lastAssistant.content}
+                  {lastAssistant?.content ?? (loading ? "Thinking…" : "Run a query to see results.")}
                 </div>
               </div>
 
               <div className="flex items-center gap-4 text-[10px] font-mono text-white/50">
                 <div className="flex items-center gap-1">
                   <Database className="w-3 h-3" />
-                  <span>{lastAssistant.sources?.length ?? 0} sources</span>
+                  <span>{lastAssistant?.sources?.length ?? 0} sources</span>
                 </div>
-                {lastAssistant.latency_ms && (
+                {lastAssistant?.latency_ms && (
                   <div className="flex items-center gap-1">
                     <Clock className="w-3 h-3" />
                     <span>{lastAssistant.latency_ms}ms</span>
@@ -650,22 +657,52 @@ export function CommandCenter() {
             </div>
 
             {/* Right: Orb */}
-            <div className="relative flex flex-col">
-              <div className="absolute top-4 right-4 flex items-center gap-2 opacity-80">
-                <Image
-                  src="/brand/logo-mark.png"
-                  alt="ReviewPulse"
-                  width={22}
-                  height={22}
-                  className="rounded"
-                />
-                <div className="h-6 w-6 rounded-full border border-white/15 flex items-center justify-center bg-white/[0.04]">
-                  <Sparkles className="w-3.5 h-3.5 text-violet-300/80" />
+            <div className="relative flex flex-col items-center justify-center">
+              <button
+                onClick={() => setIsResultOpen(false)}
+                className="absolute top-4 right-4 z-10 p-2 rounded-full hover:bg-white/10 text-white/70 hover:text-white"
+                aria-label="Close results"
+              >
+                <X className="w-4 h-4" />
+              </button>
+
+              <div className="flex items-center justify-center w-full h-full bg-black">
+                <div className="w-[700px] h-[270px] max-w-[90vw] max-h-[50vh] overflow-hidden">
+                  <div className="w-full h-full pointer-events-none">
+                    <AudioVisualizer speaking={loading || (mode === "call" && isCallActive && !isMuted)} compact={true} />
+                  </div>
                 </div>
               </div>
 
-              <div className="flex-1 min-h-0 rounded-3xl border border-white/10 m-4 overflow-hidden bg-black/40">
-                <AudioVisualizer speaking={loading || (mode === "call" && isCallActive && !isMuted)} />
+              <div className="w-full px-6 pb-8">
+                <div className="rounded-3xl border border-white/15 bg-white/[0.06] backdrop-blur-lg px-4 py-3 flex items-center gap-3">
+                  <Search className="w-4 h-4 text-white/40 ml-2" />
+                  <input
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        void runQuery();
+                      }
+                    }}
+                    placeholder={mode === "call" ? "Listening to voice input..." : "Ask a question about your documents..."}
+                    className="flex-1 bg-transparent outline-none text-sm placeholder:text-white/30 font-medium h-full py-1"
+                    disabled={mode === "call" && isCallActive}
+                  />
+                  <button
+                    onClick={() => void runQuery()}
+                    disabled={loading || (mode === "call" && isCallActive)}
+                    className={cn(
+                      "rounded-full px-5 py-2.5 border text-xs font-medium transition-colors whitespace-nowrap flex items-center gap-2",
+                      loading
+                        ? "border-white/5 bg-white/[0.03] text-white/30"
+                        : "border-white/10 bg-white/5 text-white hover:bg-white/10",
+                    )}
+                  >
+                    {loading ? <span className="animate-pulse">Thinking...</span> : <>Run Query <Zap className="w-3 h-3" /></>}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -673,13 +710,15 @@ export function CommandCenter() {
       )}
 
       {/* Debug Panel (Observability Phase 4) */}
-      <DebugPanel
-        requestId={lastRequestId}
-        stats={lastDebugStats}
-        latency={lastLatency ?? undefined}
-        isOpen={isDebugOpen}
-        onToggle={() => setIsDebugOpen(!isDebugOpen)}
-      />
+      <div className="hidden sm:block">
+        <DebugPanel
+          requestId={lastRequestId}
+          stats={lastDebugStats}
+          latency={lastLatency ?? undefined}
+          isOpen={isDebugOpen}
+          onToggle={() => setIsDebugOpen(!isDebugOpen)}
+        />
+      </div>
     </div>
   );
 }
