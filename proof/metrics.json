@@ -1,0 +1,330 @@
+{
+  "summary": {
+    "endpoint": "http://127.0.0.1:3003",
+    "total_runs": 18,
+    "ok_runs": 18,
+    "error_runs": 0,
+    "latency_ms": {
+      "p50": 2847.5,
+      "p95": 6017.9,
+      "p99": 6144.379999999999,
+      "min": 2274,
+      "max": 6176
+    },
+    "wall_ms": {
+      "p50": 2853,
+      "p95": 6021.9,
+      "p99": 6148.38,
+      "min": 2279,
+      "max": 6180
+    }
+  },
+  "results": [
+    {
+      "ok": true,
+      "status": 200,
+      "latency_ms": 2670,
+      "wall_ms": 2696,
+      "sources": [
+        "NDA_Contract.pdf-0",
+        "Master_Services_Agreement.pdf-0",
+        "SaaS_License_Agreement.pdf-0",
+        "NDA_Contract.pdf-2",
+        "SaaS_License_Agreement.pdf-2",
+        "Master_Services_Agreement.pdf-2"
+      ],
+      "answer_preview": "Based on the provided context, the confidentiality term in the NDA is **24 months** [#0].\n\nThe NDA specifies that the Receiving party (Revie",
+      "error": null,
+      "query": "What is the confidentiality term in the NDA?"
+    },
+    {
+      "ok": true,
+      "status": 200,
+      "latency_ms": 2359,
+      "wall_ms": 2364,
+      "sources": [
+        "NDA_Contract.pdf-0",
+        "Master_Services_Agreement.pdf-0",
+        "SaaS_License_Agreement.pdf-0",
+        "NDA_Contract.pdf-2",
+        "SaaS_License_Agreement.pdf-2",
+        "Master_Services_Agreement.pdf-2"
+      ],
+      "answer_preview": "Based on the provided context, the confidentiality term in the NDA is **24 months** [#0].\n\nThe NDA specifies that the Receiving party (Revie",
+      "error": null,
+      "query": "What is the confidentiality term in the NDA?"
+    },
+    {
+      "ok": true,
+      "status": 200,
+      "latency_ms": 2274,
+      "wall_ms": 2279,
+      "sources": [
+        "NDA_Contract.pdf-0",
+        "Master_Services_Agreement.pdf-0",
+        "SaaS_License_Agreement.pdf-0",
+        "NDA_Contract.pdf-2",
+        "SaaS_License_Agreement.pdf-2",
+        "Master_Services_Agreement.pdf-2"
+      ],
+      "answer_preview": "Based on the provided context, the confidentiality term in the NDA is **24 months** [#0].\n\nThe NDA specifies that the Receiving party (Revie",
+      "error": null,
+      "query": "What is the confidentiality term in the NDA?"
+    },
+    {
+      "ok": true,
+      "status": 200,
+      "latency_ms": 4923,
+      "wall_ms": 4929,
+      "sources": [
+        "NDA_Contract.pdf-0",
+        "Master_Services_Agreement.pdf-0",
+        "SaaS_License_Agreement.pdf-0",
+        "NDA_Contract.pdf-2",
+        "SaaS_License_Agreement.pdf-2",
+        "Master_Services_Agreement.pdf-2"
+      ],
+      "answer_preview": "Based on the provided context, here are the key confidentiality obligations in the NDA:\n\n**From the NDA (NovaLabs and ReviewPulse Inc.):**\n\n",
+      "error": null,
+      "query": "List the key confidentiality obligations in the NDA."
+    },
+    {
+      "ok": true,
+      "status": 200,
+      "latency_ms": 4807,
+      "wall_ms": 4814,
+      "sources": [
+        "NDA_Contract.pdf-0",
+        "Master_Services_Agreement.pdf-0",
+        "SaaS_License_Agreement.pdf-0",
+        "NDA_Contract.pdf-2",
+        "SaaS_License_Agreement.pdf-2",
+        "Master_Services_Agreement.pdf-2"
+      ],
+      "answer_preview": "Based on the provided context, here are the key confidentiality obligations in the NDA:\n\n**From the NDA (NovaLabs and ReviewPulse Inc.):**\n\n",
+      "error": null,
+      "query": "List the key confidentiality obligations in the NDA."
+    },
+    {
+      "ok": true,
+      "status": 200,
+      "latency_ms": 4852,
+      "wall_ms": 4856,
+      "sources": [
+        "NDA_Contract.pdf-0",
+        "Master_Services_Agreement.pdf-0",
+        "SaaS_License_Agreement.pdf-0",
+        "NDA_Contract.pdf-2",
+        "SaaS_License_Agreement.pdf-2",
+        "Master_Services_Agreement.pdf-2"
+      ],
+      "answer_preview": "Based on the provided context, here are the key confidentiality obligations in the NDA:\n\n**From the NDA (NovaLabs and ReviewPulse Inc.):**\n\n",
+      "error": null,
+      "query": "List the key confidentiality obligations in the NDA."
+    },
+    {
+      "ok": true,
+      "status": 200,
+      "latency_ms": 2781,
+      "wall_ms": 2788,
+      "sources": [
+        "Master_Services_Agreement.pdf-0",
+        "SaaS_License_Agreement.pdf-0",
+        "NDA_Contract.pdf-0",
+        "Master_Services_Agreement.pdf-2",
+        "NDA_Contract.pdf-2",
+        "SaaS_License_Agreement.pdf-1"
+      ],
+      "answer_preview": "Based on the provided context, the payment terms in the Master Services Agreement are:\n\n- **Hourly Rate:** $120/hour\n- **Payment Terms:** Ne",
+      "error": null,
+      "query": "What are the payment terms in the Master Services Agreement?"
+    },
+    {
+      "ok": true,
+      "status": 200,
+      "latency_ms": 2812,
+      "wall_ms": 2818,
+      "sources": [
+        "Master_Services_Agreement.pdf-0",
+        "SaaS_License_Agreement.pdf-0",
+        "NDA_Contract.pdf-0",
+        "Master_Services_Agreement.pdf-2",
+        "NDA_Contract.pdf-2",
+        "SaaS_License_Agreement.pdf-1"
+      ],
+      "answer_preview": "Based on the provided context, the payment terms in the Master Services Agreement are:\n\n- **Hourly Rate:** $120/hour\n- **Payment Terms:** Ne",
+      "error": null,
+      "query": "What are the payment terms in the Master Services Agreement?"
+    },
+    {
+      "ok": true,
+      "status": 200,
+      "latency_ms": 2388,
+      "wall_ms": 2394,
+      "sources": [
+        "Master_Services_Agreement.pdf-0",
+        "SaaS_License_Agreement.pdf-0",
+        "NDA_Contract.pdf-0",
+        "Master_Services_Agreement.pdf-2",
+        "NDA_Contract.pdf-2",
+        "SaaS_License_Agreement.pdf-1"
+      ],
+      "answer_preview": "Based on the provided context, the payment terms in the Master Services Agreement are:\n\n- **Hourly Rate:** $120/hour\n- **Payment Terms:** Ne",
+      "error": null,
+      "query": "What are the payment terms in the Master Services Agreement?"
+    },
+    {
+      "ok": true,
+      "status": 200,
+      "latency_ms": 2644,
+      "wall_ms": 2648,
+      "sources": [
+        "Master_Services_Agreement.pdf-0",
+        "SaaS_License_Agreement.pdf-0",
+        "NDA_Contract.pdf-0",
+        "SaaS_License_Agreement.pdf-3",
+        "NDA_Contract.pdf-3",
+        "Master_Services_Agreement.pdf-3"
+      ],
+      "answer_preview": "Based on the provided context:\n\n**Governing Law:** Delaware [#0]\n\nThis is specified in the Master Services Agreement between AlphaTech LLC a",
+      "error": null,
+      "query": "What is the governing law or venue mentioned?"
+    },
+    {
+      "ok": true,
+      "status": 200,
+      "latency_ms": 3019,
+      "wall_ms": 3023,
+      "sources": [
+        "Master_Services_Agreement.pdf-0",
+        "SaaS_License_Agreement.pdf-0",
+        "NDA_Contract.pdf-0",
+        "SaaS_License_Agreement.pdf-3",
+        "NDA_Contract.pdf-3",
+        "Master_Services_Agreement.pdf-3"
+      ],
+      "answer_preview": "Based on the provided context:\n\n**Governing Law:** Delaware [#0]\n\nThis is specified in the Master Services Agreement between AlphaTech LLC a",
+      "error": null,
+      "query": "What is the governing law or venue mentioned?"
+    },
+    {
+      "ok": true,
+      "status": 200,
+      "latency_ms": 3464,
+      "wall_ms": 3468,
+      "sources": [
+        "Master_Services_Agreement.pdf-0",
+        "SaaS_License_Agreement.pdf-0",
+        "NDA_Contract.pdf-0",
+        "SaaS_License_Agreement.pdf-3",
+        "NDA_Contract.pdf-3",
+        "Master_Services_Agreement.pdf-3"
+      ],
+      "answer_preview": "Based on the provided context:\n\n**Governing Law:** Delaware [#0]\n\nThis is specified in the Master Services Agreement between AlphaTech LLC a",
+      "error": null,
+      "query": "What is the governing law or venue mentioned?"
+    },
+    {
+      "ok": true,
+      "status": 200,
+      "latency_ms": 2883,
+      "wall_ms": 2888,
+      "sources": [
+        "SaaS_License_Agreement.pdf-0",
+        "NDA_Contract.pdf-0",
+        "Master_Services_Agreement.pdf-0",
+        "Master_Services_Agreement.pdf-1",
+        "SaaS_License_Agreement.pdf-1",
+        "NDA_Contract.pdf-1"
+      ],
+      "answer_preview": "Based on the provided context, **no, the SaaS license does not allow sublicensing**. \n\nThe license is explicitly described as \"Non-exclusive",
+      "error": null,
+      "query": "Does the SaaS license allow sublicensing?"
+    },
+    {
+      "ok": true,
+      "status": 200,
+      "latency_ms": 2711,
+      "wall_ms": 2715,
+      "sources": [
+        "SaaS_License_Agreement.pdf-0",
+        "NDA_Contract.pdf-0",
+        "Master_Services_Agreement.pdf-0",
+        "Master_Services_Agreement.pdf-1",
+        "SaaS_License_Agreement.pdf-1",
+        "NDA_Contract.pdf-1"
+      ],
+      "answer_preview": "Based on the provided context, **no, the SaaS license does not allow sublicensing**. \n\nThe license is explicitly described as \"Non-exclusive",
+      "error": null,
+      "query": "Does the SaaS license allow sublicensing?"
+    },
+    {
+      "ok": true,
+      "status": 200,
+      "latency_ms": 2666,
+      "wall_ms": 2669,
+      "sources": [
+        "SaaS_License_Agreement.pdf-0",
+        "NDA_Contract.pdf-0",
+        "Master_Services_Agreement.pdf-0",
+        "Master_Services_Agreement.pdf-1",
+        "SaaS_License_Agreement.pdf-1",
+        "NDA_Contract.pdf-1"
+      ],
+      "answer_preview": "Based on the provided context, **no, the SaaS license does not allow sublicensing**. \n\nThe license is explicitly described as \"Non-exclusive",
+      "error": null,
+      "query": "Does the SaaS license allow sublicensing?"
+    },
+    {
+      "ok": true,
+      "status": 200,
+      "latency_ms": 5593,
+      "wall_ms": 5597,
+      "sources": [
+        "Master_Services_Agreement.pdf-0",
+        "NDA_Contract.pdf-2",
+        "Master_Services_Agreement.pdf-2",
+        "SaaS_License_Agreement.pdf-0",
+        "SaaS_License_Agreement.pdf-3",
+        "Master_Services_Agreement.pdf-3"
+      ],
+      "answer_preview": "# Termination Provisions Summary\n\nBased on the provided documents, here are the termination provisions:\n\n## Master Services Agreement\n- **St",
+      "error": null,
+      "query": "Summarize the termination provisions across the documents."
+    },
+    {
+      "ok": true,
+      "status": 200,
+      "latency_ms": 5990,
+      "wall_ms": 5994,
+      "sources": [
+        "Master_Services_Agreement.pdf-0",
+        "NDA_Contract.pdf-2",
+        "Master_Services_Agreement.pdf-2",
+        "SaaS_License_Agreement.pdf-0",
+        "SaaS_License_Agreement.pdf-3",
+        "Master_Services_Agreement.pdf-3"
+      ],
+      "answer_preview": "# Termination Provisions Summary\n\nBased on the provided documents, here are the termination provisions:\n\n## Master Services Agreement\n- **St",
+      "error": null,
+      "query": "Summarize the termination provisions across the documents."
+    },
+    {
+      "ok": true,
+      "status": 200,
+      "latency_ms": 6176,
+      "wall_ms": 6180,
+      "sources": [
+        "Master_Services_Agreement.pdf-0",
+        "NDA_Contract.pdf-2",
+        "Master_Services_Agreement.pdf-2",
+        "SaaS_License_Agreement.pdf-0",
+        "SaaS_License_Agreement.pdf-3",
+        "Master_Services_Agreement.pdf-3"
+      ],
+      "answer_preview": "# Termination Provisions Summary\n\nBased on the provided documents, here are the termination provisions:\n\n## Master Services Agreement\n- **St",
+      "error": null,
+      "query": "Summarize the termination provisions across the documents."
+    }
+  ]
+}

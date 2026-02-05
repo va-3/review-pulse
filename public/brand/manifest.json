@@ -1,0 +1,13 @@
+{
+  "source": "public/brand/source/logo-source.png",
+  "generatedAt": "2026-02-05T00:05:12.249Z",
+  "canonicalMark": "/brand/dist/logo-mark.png",
+  "exports": {
+    "logo-mark-32.png": "/brand/dist/logo-mark-32.png",
+    "logo-mark-64.png": "/brand/dist/logo-mark-64.png",
+    "logo-mark-128.png": "/brand/dist/logo-mark-128.png",
+    "apple-touch-icon.png": "/brand/dist/apple-touch-icon.png",
+    "icon-192.png": "/brand/dist/icon-192.png",
+    "icon-512.png": "/brand/dist/icon-512.png"
+  }
+}

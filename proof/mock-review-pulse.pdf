@@ -1,0 +1,86 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 1456 >>
+stream
+BT
+/F1 12 Tf
+72 720 Td
+(ReviewPulse Mock Dataset) Tj
+0 -16 Td
+() Tj
+0 -16 Td
+(Company: AuroraHome Labs) Tj
+0 -16 Td
+(Product: Halo Sleep Mask v2) Tj
+0 -16 Td
+() Tj
+0 -16 Td
+(Customer Reviews \(sample\):) Tj
+0 -16 Td
+(1\) "The blackout is incredible and the cooling gel pad actually helps me fall asleep faster. Shipping was 2 days late.") Tj
+0 -16 Td
+(2\) "Comfortable for side sleeping, but the strap loosened after two weeks.") Tj
+0 -16 Td
+(3\) "Love the battery life and the soft fabric. Wish it came with a travel case.") Tj
+0 -16 Td
+(4\) "Too tight out of the box, but the replacement strap fixed it. Support was helpful.") Tj
+0 -16 Td
+(5\) "Great for meditation and naps. The light seal is excellent.") Tj
+0 -16 Td
+() Tj
+0 -16 Td
+(Support Tickets \(sample\):) Tj
+0 -16 Td
+(- Ticket #AHL-1042: "Strap stitching came undone after 3 weeks.") Tj
+0 -16 Td
+(- Ticket #AHL-1051: "Requesting refund due to fit issues.") Tj
+0 -16 Td
+(- Ticket #AHL-1059: "Battery not charging beyond 80%.") Tj
+0 -16 Td
+() Tj
+0 -16 Td
+(Survey Results \(sample\):) Tj
+0 -16 Td
+(- NPS: 42) Tj
+0 -16 Td
+(- Top positives: comfort, light seal, cooling) Tj
+0 -16 Td
+(- Top negatives: strap durability, fit consistency, accessory requests) Tj
+0 -16 Td
+() Tj
+0 -16 Td
+(Key Themes:) Tj
+0 -16 Td
+(- Comfort and light seal are the strongest positives.) Tj
+0 -16 Td
+(- Strap durability and fit are consistent issues.) Tj
+0 -16 Td
+(- Accessories \(travel case\) are a common request.) Tj
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000241 00000 n 
+0000001749 00000 n 
+trailer
+<< /Size 6 /Root 1 0 R >>
+startxref
+1819
+%%EOF
