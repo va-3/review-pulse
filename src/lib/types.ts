@@ -9,6 +9,9 @@ export interface RAGResponse {
   answer: string;
   sources: string[];
   latency_ms: number;
+  confidence?: 'high' | 'medium' | 'low';
+  requestId?: string;
+  debug?: any;
 }
 
 export interface IngestRequest {

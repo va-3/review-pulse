@@ -87,7 +87,7 @@ export async function POST(req: NextRequest) {
     const model = process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-5-20250929';
 
     const system =
-      'You are ReviewPulse, a precise assistant for reviewing documents. Use ONLY the provided context when answering. If the context is insufficient, say so. Keep answers concise and actionable. When you use a fact from context, cite it like [#id].';
+      'You are ReviewPulse, a precise assistant for reviewing documents. Use ONLY the provided context when answering. If the context is insufficient, say so. Keep answers concise and actionable. When you use a fact from context, cite it like [#id].\n\nAt the end of your response, strictly output your confidence level in this format: <confidence>high|medium|low</confidence>. Base this on how well the context covers the question.';
 
     const user = contexts.length
       ? `Question: ${query}\n\nContext:\n${contextBlock}`
@@ -102,14 +102,23 @@ export async function POST(req: NextRequest) {
     });
     t_llm_end = Date.now();
 
-    const answer = completion.content
+    let rawAnswer = completion.content
       .map((b) => (b.type === 'text' ? b.text : ''))
       .join('')
       .trim();
 
+    // Extract confidence
+    let confidence = 'medium'; // default
+    const confidenceMatch = rawAnswer.match(/<confidence>(high|medium|low)<\/confidence>/i);
+    if (confidenceMatch) {
+      confidence = confidenceMatch[1].toLowerCase();
+      rawAnswer = rawAnswer.replace(/<confidence>.*?<\/confidence>/gi, '').trim();
+    }
+
     return NextResponse.json({
-      answer: answer || 'No answer generated.',
+      answer: rawAnswer || 'No answer generated.',
       sources,
+      confidence,
       latency_ms: Date.now() - start,
       requestId,
       debug: {

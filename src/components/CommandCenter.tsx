@@ -18,6 +18,10 @@ import {
   Zap,
   X,
   RotateCcw,
+  GitCompare,
+  Check,
+  Brain,
+  ChevronRight,
 } from "lucide-react";
 
 type Doc = {
@@ -34,8 +38,9 @@ type Msg = {
   content: string;
   latency_ms?: number;
   sources?: string[];
-  requestId?: string; // ADDED
-  debug?: any; // ADDED
+  requestId?: string;
+  debug?: any;
+  confidence?: 'high' | 'medium' | 'low';
 };
 
 function formatBytes(bytes: number) {
@@ -54,7 +59,7 @@ async function fileToBase64(file: File) {
   return btoa(String.fromCharCode(...new Uint8Array(buf)));
 }
 
-type Mode = "text" | "call";
+type Mode = "text" | "call" | "compare";
 
 export function CommandCenter() {
   const [mode, setMode] = useState<Mode>("text");
@@ -80,6 +85,16 @@ export function CommandCenter() {
   const [isResultOpen, setIsResultOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
+  // Comparison mode state
+  const [selectedDocs, setSelectedDocs] = useState<string[]>([]);
+  const [comparisonType, setComparisonType] = useState<"differences" | "similarities" | "summary">("differences");
+  const [comparisonResult, setComparisonResult] = useState<any>(null);
+
+  // Smart query decomposition state
+  const [smartMode, setSmartMode] = useState(false);
+  const [decomposedResult, setDecomposedResult] = useState<any>(null);
+  const [showSteps, setShowSteps] = useState(true);
+
   // Load persisted state
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -87,12 +102,20 @@ export function CommandCenter() {
       const raw = window.localStorage.getItem("reviewpulse_state_v1");
       if (!raw) return;
       const parsed = JSON.parse(raw) as { docs?: Doc[]; messages?: Msg[] };
-      if (parsed?.docs) setDocs(parsed.docs);
+      if (parsed?.docs && parsed.docs.length > 0) {
+        console.log("[ReviewPulse] Loaded docs from storage:", parsed.docs.length);
+        setDocs(parsed.docs);
+      }
       if (parsed?.messages) setMessages(parsed.messages);
-    } catch {
-      // ignore
+    } catch (e) {
+      console.error("[ReviewPulse] Failed to load state:", e);
     }
   }, []);
+
+  // Log docs changes
+  useEffect(() => {
+    console.log("[ReviewPulse] Docs updated:", docs.length, docs.map(d => d.name));
+  }, [docs]);
 
   // Persist state
   useEffect(() => {
@@ -155,10 +178,20 @@ export function CommandCenter() {
         docId: r.filename,
         error: r.error,
       }));
+      
+      console.log("[ReviewPulse] Demo ingest received:", nextDocs);
+      
       setDocs((prev) => {
         const byName = new Map(prev.map((d) => [d.name, d] as const));
         for (const d of nextDocs) byName.set(d.name, d);
-        return Array.from(byName.values());
+        const updated = Array.from(byName.values());
+        console.log("[ReviewPulse] Updated docs:", updated);
+        // Force immediate localStorage sync
+        if (typeof window !== "undefined") {
+          const payload = JSON.stringify({ docs: updated, messages });
+          window.localStorage.setItem("reviewpulse_state_v1", payload);
+        }
+        return updated;
       });
 
       await loadProof();
@@ -248,6 +281,7 @@ export function CommandCenter() {
           sources: json.sources,
           requestId: json.requestId,
           debug: json.debug,
+          confidence: json.confidence,
         },
       ]);
       setIsResultOpen(true);
@@ -265,6 +299,136 @@ export function CommandCenter() {
     } finally {
       setLoading(false);
       setTimeout(() => setIsCallActive(false), 900);
+    }
+  }
+
+  async function runComparison() {
+    const q = query.trim();
+    if (loading) return;
+    if (!q) {
+      setMessages((prev) => [...prev, { role: "assistant", content: "Please enter a comparison question." }]);
+      return;
+    }
+    if (selectedDocs.length < 2) {
+      setMessages((prev) => [...prev, { role: "assistant", content: "Please select at least 2 documents to compare." }]);
+      return;
+    }
+
+    setLoading(true);
+    setMessages((prev) => [...prev, { role: "user", content: `[Compare ${selectedDocs.length} docs] ${q}` }]);
+    setQuery("");
+    setIsResultOpen(true);
+
+    try {
+      const res = await fetch("/api/compare", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ 
+          query: q, 
+          docIds: selectedDocs,
+          comparisonType 
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json?.error || `Comparison failed (${res.status})`);
+
+      setComparisonResult(json);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: json.answer,
+          latency_ms: json.latency_ms,
+          sources: json.sources,
+          requestId: json.requestId,
+          debug: json.debug,
+        },
+      ]);
+      setIsResultOpen(true);
+
+      if (json.requestId) {
+        setLastRequestId(json.requestId);
+        setLastDebugStats(json.debug);
+      }
+    } catch (e) {
+      setMessages((prev) => [...prev, { role: "assistant", content: `Comparison error: ${String(e)}` }]);
+      setIsResultOpen(true);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function runSmartQuery() {
+    const q = query.trim();
+    if (loading) return;
+    if (!q) {
+      setMessages((prev) => [...prev, { role: "assistant", content: "Please enter a question." }]);
+      return;
+    }
+
+    setLoading(true);
+    setMessages((prev) => [...prev, { role: "user", content: q }]);
+    setQuery("");
+    setIsResultOpen(true);
+
+    try {
+      // First try decomposition
+      const decomposeRes = await fetch("/api/decompose", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ query: q }),
+      });
+      const decomposeJson = await decomposeRes.json();
+
+      if (decomposeJson.decomposed) {
+        // Show decomposed result with steps
+        setDecomposedResult(decomposeJson);
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content: decomposeJson.finalAnswer,
+            latency_ms: decomposeJson.latency_ms,
+            sources: decomposeJson.steps.flatMap((s: any) => s.sources),
+            requestId: decomposeJson.requestId,
+            debug: decomposeJson.debug,
+          },
+        ]);
+      } else {
+        // Fall back to regular query
+        const res = await fetch("/api/query", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ query: q }),
+        });
+        const json = await res.json();
+        if (!res.ok) throw new Error(json?.error || `Query failed (${res.status})`);
+
+        setDecomposedResult(null);
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content: json.answer,
+            latency_ms: json.latency_ms,
+            sources: json.sources,
+            requestId: json.requestId,
+            debug: json.debug,
+          },
+        ]);
+      }
+
+      setIsResultOpen(true);
+
+      if (decomposeJson.requestId) {
+        setLastRequestId(decomposeJson.requestId);
+        setLastDebugStats(decomposeJson.debug);
+      }
+    } catch (e) {
+      setMessages((prev) => [...prev, { role: "assistant", content: `Query error: ${String(e)}` }]);
+      setIsResultOpen(true);
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -343,8 +507,23 @@ export function CommandCenter() {
           <section className="lg:col-span-4 grid grid-rows-[auto_minmax(0,1fr)_auto] h-full gap-4">
             {/* Header / Actions */}
             <div className="flex items-center justify-between px-1">
-              <h2 className="text-base font-medium text-white/90">Documents</h2>
+              <div className="flex items-center gap-3">
+                <h2 className="text-base font-medium text-white/90">Documents</h2>
+                {mode === "compare" && selectedDocs.length > 0 && (
+                  <span className="text-[10px] font-mono text-violet-300/80 bg-violet-500/10 px-2 py-0.5 rounded-full">
+                    {selectedDocs.length} selected
+                  </span>
+                )}
+              </div>
               <div className="flex items-center gap-2">
+                 {mode === "compare" && selectedDocs.length > 0 && (
+                   <button
+                     onClick={() => setSelectedDocs([])}
+                     className="text-[10px] font-mono text-white/40 hover:text-white/70 px-2 py-1"
+                   >
+                     Clear
+                   </button>
+                 )}
                  <button
                     onClick={ingestDemo}
                     disabled={demoLoading}
@@ -400,37 +579,73 @@ export function CommandCenter() {
                     </div>
                   </div>
                 ) : (
-                  docs.map((d) => (
-                    <div key={d.name} className="rounded-xl border border-white/5 bg-white/[0.02] px-3 py-2.5 hover:bg-white/[0.04] transition-colors group">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <div className="text-sm font-medium tracking-tight truncate text-white/90">{d.name}</div>
-                          <div className="text-[10px] text-muted-foreground font-mono mt-0.5">
-                            {formatBytes(d.size)}
-                            {typeof d.chunks === "number" ? ` · ${d.chunks} chunks` : ""}
+                  docs.map((d) => {
+                    const isSelected = selectedDocs.includes(d.name);
+                    return (
+                      <div 
+                        key={d.name} 
+                        onClick={() => {
+                          if (mode === "compare" && d.status === "ingested") {
+                            setSelectedDocs(prev => 
+                              isSelected 
+                                ? prev.filter(name => name !== d.name)
+                                : [...prev, d.name]
+                            );
+                          }
+                        }}
+                        className={cn(
+                          "rounded-xl border px-3 py-2.5 transition-colors group",
+                          mode === "compare" && d.status === "ingested" && "cursor-pointer",
+                          isSelected 
+                            ? "border-violet-500/30 bg-violet-500/10" 
+                            : "border-white/5 bg-white/[0.02] hover:bg-white/[0.04]"
+                        )}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex items-center gap-2 min-w-0 flex-1">
+                            {mode === "compare" && d.status === "ingested" && (
+                              <div className={cn(
+                                "w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 transition-colors",
+                                isSelected 
+                                  ? "bg-violet-500 border-violet-500" 
+                                  : "border-white/20 group-hover:border-white/40"
+                              )}>
+                                {isSelected && <Check className="w-3 h-3 text-white" />}
+                              </div>
+                            )}
+                            <div className="min-w-0">
+                              <div className="text-sm font-medium tracking-tight truncate text-white/90">{d.name}</div>
+                              <div className="text-[10px] text-muted-foreground font-mono mt-0.5">
+                                {formatBytes(d.size)}
+                                {typeof d.chunks === "number" ? ` · ${d.chunks} chunks` : ""}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span
+                              className={cn(
+                                "text-[9px] uppercase tracking-wider font-mono px-1.5 py-0.5 rounded-full border",
+                                d.status === "ingested" && "border-emerald-500/20 text-emerald-300 bg-emerald-500/10",
+                                d.status === "ingesting" && "border-white/10 text-white/60 bg-white/5 animate-pulse",
+                                d.status === "error" && "border-red-500/20 text-red-300 bg-red-500/10",
+                              )}
+                            >
+                              {d.status}
+                            </span>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDocs((prev) => prev.filter((x) => x.name !== d.name));
+                              }}
+                              className="opacity-0 group-hover:opacity-100 p-1.5 rounded-full hover:bg-white/10 transition-all"
+                            >
+                              <Trash2 className="w-3 h-3 text-white/60" />
+                            </button>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <span
-                            className={cn(
-                              "text-[9px] uppercase tracking-wider font-mono px-1.5 py-0.5 rounded-full border",
-                              d.status === "ingested" && "border-emerald-500/20 text-emerald-300 bg-emerald-500/10",
-                              d.status === "ingesting" && "border-white/10 text-white/60 bg-white/5 animate-pulse",
-                              d.status === "error" && "border-red-500/20 text-red-300 bg-red-500/10",
-                            )}
-                          >
-                            {d.status}
-                          </span>
-                          <button
-                            onClick={() => setDocs((prev) => prev.filter((x) => x.name !== d.name))}
-                            className="opacity-0 group-hover:opacity-100 p-1.5 rounded-full hover:bg-white/10 transition-all"
-                          >
-                            <Trash2 className="w-3 h-3 text-white/60" />
-                          </button>
-                        </div>
                       </div>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
             </div>
@@ -510,6 +725,16 @@ export function CommandCenter() {
                   >
                     Voice
                   </button>
+                  <button
+                    onClick={() => setMode("compare")}
+                    className={cn(
+                      "px-3 py-1 text-[10px] font-mono uppercase tracking-wider rounded-full transition-colors flex items-center gap-1",
+                      mode === "compare" ? "bg-white/10 text-white shadow-sm" : "text-white/40 hover:text-white/70",
+                    )}
+                  >
+                    <GitCompare className="w-3 h-3" />
+                    Compare
+                  </button>
                 </div>
                 <button
                   onClick={() => isCallActive ? endCall() : startCall()}
@@ -551,32 +776,112 @@ export function CommandCenter() {
 
             {/* Query Input */}
             <div className="shrink-0 rounded-3xl border border-white/15 bg-white/[0.06] backdrop-blur-lg px-4 py-3 flex items-center gap-3 focus-within:border-white/20 transition-colors">
-              <Search className="w-4 h-4 text-white/40 ml-2" />
+              {mode === "compare" ? (
+                <GitCompare className="w-4 h-4 text-violet-300/80 ml-2" />
+              ) : smartMode ? (
+                <Brain className="w-4 h-4 text-amber-300/80 ml-2" />
+              ) : (
+                <Search className="w-4 h-4 text-white/40 ml-2" />
+              )}
+              
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
-                    void runQuery();
+                    if (mode === "compare") {
+                      void runComparison();
+                    } else if (smartMode) {
+                      void runSmartQuery();
+                    } else {
+                      void runQuery();
+                    }
                   }
                 }}
-                placeholder={mode === "call" ? "Listening to voice input..." : "Ask a question about your documents..."}
+                placeholder={
+                  mode === "call" 
+                    ? "Listening to voice input..." 
+                    : mode === "compare"
+                    ? "What to compare? (e.g., 'termination clauses', 'payment terms')"
+                    : smartMode
+                    ? "Complex question? I'll break it down..."
+                    : "Ask a question about your documents..."
+                }
                 className="flex-1 bg-transparent outline-none text-sm placeholder:text-white/30 font-medium h-full py-1"
                 disabled={mode === "call" && isCallActive}
               />
-              <button
-                onClick={() => void runQuery()}
-                disabled={loading || (mode === "call" && isCallActive)}
-                className={cn(
-                  "rounded-full px-5 py-2.5 border text-xs font-medium transition-colors whitespace-nowrap flex items-center gap-2",
-                  loading
-                    ? "border-white/5 bg-white/[0.03] text-white/30"
-                    : "border-white/10 bg-white/5 text-white hover:bg-white/10",
-                )}
-              >
-                {loading ? <span className="animate-pulse">Thinking...</span> : <>Run Query <Zap className="w-3 h-3" /></>}
-              </button>
+              
+              {mode === "compare" ? (
+                <div className="flex items-center gap-2">
+                  <select
+                    value={comparisonType}
+                    onChange={(e) => setComparisonType(e.target.value as any)}
+                    className="bg-black/40 border border-white/10 rounded-lg px-3 py-2 text-[11px] text-white/70 outline-none focus:border-violet-500/50"
+                  >
+                    <option value="differences">Differences</option>
+                    <option value="similarities">Similarities</option>
+                    <option value="summary">Summary</option>
+                  </select>
+                  <button
+                    onClick={() => void runComparison()}
+                    disabled={loading || selectedDocs.length < 2}
+                    className={cn(
+                      "rounded-full px-5 py-2.5 border text-xs font-medium transition-colors whitespace-nowrap flex items-center gap-2",
+                      loading || selectedDocs.length < 2
+                        ? "border-white/5 bg-white/[0.03] text-white/30"
+                        : "border-violet-500/30 bg-violet-500/10 text-violet-300 hover:bg-violet-500/20",
+                    )}
+                  >
+                    {loading ? (
+                      <span className="animate-pulse">Comparing...</span>
+                    ) : (
+                      <>
+                        Compare <GitCompare className="w-3 h-3" />
+                      </>
+                    )}
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  {/* Smart Mode Toggle */}
+                  {mode !== "call" && (
+                    <button
+                      onClick={() => setSmartMode(!smartMode)}
+                      className={cn(
+                        "flex items-center gap-1.5 px-3 py-2 rounded-lg text-[11px] font-medium transition-colors",
+                        smartMode
+                          ? "bg-amber-500/10 text-amber-300 border border-amber-500/30"
+                          : "bg-white/5 text-white/50 border border-white/10 hover:bg-white/10"
+                      )}
+                    >
+                      <Brain className="w-3.5 h-3.5" />
+                      Smart
+                    </button>
+                  )}
+                  
+                  <button
+                    onClick={() => smartMode ? runSmartQuery() : runQuery()}
+                    disabled={loading || (mode === "call" && isCallActive)}
+                    className={cn(
+                      "rounded-full px-5 py-2.5 border text-xs font-medium transition-colors whitespace-nowrap flex items-center gap-2",
+                      loading
+                        ? "border-white/5 bg-white/[0.03] text-white/30"
+                        : smartMode
+                        ? "border-amber-500/30 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20"
+                        : "border-white/10 bg-white/5 text-white hover:bg-white/10",
+                    )}
+                  >
+                    {loading ? (
+                      <span className="animate-pulse">Thinking...</span>
+                    ) : smartMode ? (
+                      <>Smart Query <Brain className="w-3 h-3" /></>
+                    ) : (
+                      <>Run Query <Zap className="w-3 h-3" /></>
+                    )}
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Bottom: Result Launcher + Stats */}
@@ -595,16 +900,35 @@ export function CommandCenter() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Database className="w-3.5 h-3.5 text-white/40" />
-                  <span className="text-[10px] font-mono text-white/40 uppercase tracking-wider">Context</span>
-                  <span className="text-xs font-mono text-white/80">{ingestedCount} docs</span>
+                  {mode === "compare" ? (
+                    <>
+                      <GitCompare className="w-3.5 h-3.5 text-violet-300/60" />
+                      <span className="text-[10px] font-mono text-violet-300/60 uppercase tracking-wider">Compare</span>
+                      <span className="text-xs font-mono text-violet-300/80">{selectedDocs.length} docs</span>
+                    </>
+                  ) : (
+                    <>
+                      <Database className="w-3.5 h-3.5 text-white/40" />
+                      <span className="text-[10px] font-mono text-white/40 uppercase tracking-wider">Context</span>
+                      <span className="text-xs font-mono text-white/80">{ingestedCount} docs</span>
+                    </>
+                  )}
                 </div>
               </div>
 
               <div className="flex-1 p-6 flex items-center justify-between gap-6">
                 <div className="space-y-2">
-                  <div className="text-sm text-white/80">Results open in fullscreen after each query.</div>
-                  <div className="text-[11px] text-white/40 font-mono">No scrolling on the main page.</div>
+                  {mode === "compare" ? (
+                    <>
+                      <div className="text-sm text-white/80">Select 2+ documents and compare clauses.</div>
+                      <div className="text-[11px] text-white/40 font-mono">Example: "termination clauses" or "payment terms"</div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="text-sm text-white/80">Results open in fullscreen after each query.</div>
+                      <div className="text-[11px] text-white/40 font-mono">No scrolling on the main page.</div>
+                    </>
+                  )}
                 </div>
                 <button
                   onClick={() => setIsResultOpen(true)}
@@ -612,11 +936,17 @@ export function CommandCenter() {
                   className={cn(
                     "rounded-full px-5 py-2.5 border text-xs font-medium transition-colors whitespace-nowrap flex items-center gap-2",
                     lastAssistant
-                      ? "border-white/10 bg-white/5 text-white hover:bg-white/10"
+                      ? mode === "compare" 
+                        ? "border-violet-500/30 bg-violet-500/10 text-violet-300 hover:bg-violet-500/20"
+                        : "border-white/10 bg-white/5 text-white hover:bg-white/10"
                       : "border-white/5 bg-white/[0.03] text-white/30",
                   )}
                 >
-                  Open Results <Zap className="w-3 h-3" />
+                  {mode === "compare" ? (
+                    <>View Comparison <GitCompare className="w-3 h-3" /></>
+                  ) : (
+                    <>Open Results <Zap className="w-3 h-3" /></>
+                  )}
                 </button>
               </div>
             </div>
@@ -637,9 +967,60 @@ export function CommandCenter() {
               </div>
 
               <div className="flex-1 rounded-2xl border border-white/15 bg-white/[0.06] backdrop-blur-lg p-5 overflow-y-auto">
-                <div className="text-sm leading-relaxed whitespace-pre-wrap text-white/85">
-                  {lastAssistant?.content ?? (loading ? "Thinking…" : "Run a query to see results.")}
-                </div>
+                {/* Decomposed Query Results */}
+                {decomposedResult?.decomposed && showSteps && (
+                  <div className="mb-6 space-y-3">
+                    <div className="flex items-center gap-2 text-amber-300/80 mb-3">
+                      <Brain className="w-4 h-4" />
+                      <span className="text-xs font-mono uppercase tracking-wider">AI Reasoning Steps</span>
+                    </div>
+                    
+                    <div className="text-xs text-white/50 mb-2">{decomposedResult.reasoning}</div>
+                    
+                    {decomposedResult.steps?.map((step: any, i: number) => (
+                      <div key={i} className="border-l-2 border-amber-500/30 pl-3 py-2">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="w-5 h-5 rounded-full bg-amber-500/20 text-amber-300 text-xs flex items-center justify-center font-mono">
+                            {step.step}
+                          </span>
+                          <span className="text-xs text-white/70">{step.query}</span>
+                        </div>
+                        <p className="text-sm text-white/80 ml-7">{step.answer.substring(0, 150)}...</p>
+                        <div className="text-[10px] text-white/40 ml-7 mt-1">
+                          {step.chunksUsed} chunks · {step.retrievalMs}ms
+                        </div>
+                      </div>
+                    ))}
+                    
+                    <div className="border-t border-white/10 pt-3 mt-3">
+                      <span className="text-xs text-amber-300/60 font-mono">SYNTHESIZED ANSWER</span>
+                    </div>
+                  </div>
+                )}
+                
+                {/* Comparison Results */}
+                {comparisonResult?.structured?.sections && comparisonResult.structured.sections.length > 0 ? (
+                  <div className="space-y-6">
+                    {comparisonResult.structured.sections.map((section: any, i: number) => (
+                      <div key={i} className="border-l-2 border-violet-500/30 pl-4">
+                        <h4 className="text-sm font-medium text-violet-300/90 mb-2">{section.aspect}</h4>
+                        <div className="space-y-2">
+                          {section.comparisons.map((comp: any, j: number) => (
+                            <div key={j} className="text-sm">
+                              <span className="text-white/50 font-mono text-xs">{comp.doc}:</span>
+                              <p className="text-white/80 mt-0.5">{comp.value}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-sm leading-relaxed whitespace-pre-wrap text-white/85">
+                    {/* Fallback to raw answer */}
+                    {comparisonResult?.answer || decomposedResult?.finalAnswer || lastAssistant?.content || (loading ? "Thinking…" : "Run a query to see results.")}
+                  </div>
+                )}
               </div>
 
               <div className="flex items-center gap-4 text-[10px] font-mono text-white/50">
@@ -651,6 +1032,17 @@ export function CommandCenter() {
                   <div className="flex items-center gap-1">
                     <Clock className="w-3 h-3" />
                     <span>{lastAssistant.latency_ms}ms</span>
+                  </div>
+                )}
+                {lastAssistant?.confidence && (
+                  <div className={cn(
+                    "flex items-center gap-1 px-2 py-0.5 rounded-full",
+                    lastAssistant.confidence === 'high' ? "bg-emerald-500/20 text-emerald-300" :
+                    lastAssistant.confidence === 'medium' ? "bg-amber-500/20 text-amber-300" :
+                    "bg-red-500/20 text-red-300"
+                  )}>
+                    <span className="w-1.5 h-1.5 rounded-full bg-current" />
+                    <span className="uppercase">{lastAssistant.confidence}</span>
                   </div>
                 )}
               </div>
